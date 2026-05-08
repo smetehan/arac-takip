@@ -1,0 +1,100 @@
+// Araç Takip - Prisma Şeması (Turso/libSQL)
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Kullanıcı / Ortak modeli
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  ad        String
+  soyad     String
+  rol       String   @default("ORTAK") // "ADMIN" | "ORTAK"
+  aktif     Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  sermayeHareketleri SermayeHareket[]
+  araclar            Arac[]            @relation("KaydedenKullanici")
+}
+
+// Sermaye hareketleri
+model SermayeHareket {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tutar     Float
+  tip       String   // "YATIRMA" | "CEKME" | "KAR_PAYI" | "ZARAR_PAYI"
+  aciklama  String?
+  aracId    Int?
+  arac      Arac?    @relation(fields: [aracId], references: [id], onDelete: SetNull)
+  tarih     DateTime @default(now())
+  createdAt DateTime @default(now())
+}
+
+// Araç modeli
+model Arac {
+  id           Int       @id @default(autoincrement())
+  marka        String
+  model        String
+  uretimYili   Int
+  km           Int
+  renk         String
+  plaka        String?
+  alimFiyati   Float
+  alimTarihi   DateTime
+  satimFiyati  Float?
+  satimTarihi  DateTime?
+  alici        String?
+  notlar       String?
+  durum        String    @default("STOKTA")
+  sermayeSnapshot String?
+
+  kaydedenId   Int?
+  kaydeden     User?     @relation("KaydedenKullanici", fields: [kaydedenId], references: [id], onDelete: SetNull)
+
+  resimler     AracResim[]
+  masraflar    Masraf[]
+  islemler     Islem[]
+  sermayeHareketleri SermayeHareket[]
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model AracResim {
+  id       Int     @id @default(autoincrement())
+  aracId   Int
+  arac     Arac    @relation(fields: [aracId], references: [id], onDelete: Cascade)
+  url      String
+  baslik   String?
+  createdAt DateTime @default(now())
+}
+
+model Masraf {
+  id        Int      @id @default(autoincrement())
+  aracId    Int
+  arac      Arac     @relation(fields: [aracId], references: [id], onDelete: Cascade)
+  baslik    String
+  tutar     Float
+  kategori  String   @default("DIGER")
+  aciklama  String?
+  tarih     DateTime @default(now())
+  createdAt DateTime @default(now())
+}
+
+model Islem {
+  id        Int      @id @default(autoincrement())
+  aracId    Int
+  arac      Arac     @relation(fields: [aracId], references: [id], onDelete: Cascade)
+  baslik    String
+  aciklama  String?
+  tarih     DateTime @default(now())
+  createdAt DateTime @default(now())
+}

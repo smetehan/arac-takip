@@ -1,0 +1,184 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #f6f5f1;
+  --bg-2: #ffffff;
+  --ink: #1c1a16;
+  --ink-soft: #534d3d;
+  --ink-mute: #a59e85;
+  --line: #e8e6dc;
+  --accent: #d97706;
+  --accent-light: #fbbf24;
+  --accent-dark: #92400e;
+  --good: #166534;
+  --good-bg: #dcfce7;
+  --bad: #991b1b;
+  --bad-bg: #fee2e2;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Outfit', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background-image:
+    radial-gradient(at 20% 0%, rgba(217, 119, 6, 0.06) 0%, transparent 50%),
+    radial-gradient(at 80% 100%, rgba(28, 26, 22, 0.04) 0%, transparent 50%);
+  min-height: 100vh;
+}
+
+@layer components {
+  .heading {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+
+  .display {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    letter-spacing: -0.04em;
+    line-height: 0.95;
+  }
+
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-feature-settings: 'tnum';
+  }
+
+  .card {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02), 0 12px 40px -16px rgba(0,0,0,0.08);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.1rem;
+    border-radius: 999px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+
+  .btn-primary {
+    background: var(--ink);
+    color: var(--bg);
+  }
+  .btn-primary:hover { background: #000; }
+
+  .btn-accent {
+    background: var(--accent);
+    color: white;
+  }
+  .btn-accent:hover { background: var(--accent-dark); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--line);
+  }
+  .btn-ghost:hover { background: var(--bg); border-color: var(--ink-mute); }
+
+  .btn-danger {
+    background: var(--bad-bg);
+    color: var(--bad);
+  }
+  .btn-danger:hover { background: #fecaca; }
+
+  .input {
+    width: 100%;
+    padding: 0.7rem 0.95rem;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: white;
+    font-size: 0.95rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .input:focus {
+    outline: none;
+    border-color: var(--ink);
+    box-shadow: 0 0 0 4px rgba(28, 26, 22, 0.06);
+  }
+
+  .label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.4rem;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .badge-stokta {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  .badge-satildi {
+    background: var(--good-bg);
+    color: var(--good);
+  }
+
+  .stat-num {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: 2.5rem;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .table-clean {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table-clean th {
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .table-clean td {
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.9rem;
+  }
+  .table-clean tr:last-child td { border-bottom: none; }
+  .table-clean tr:hover { background: var(--bg); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-up {
+  animation: fadeUp 0.4s ease-out;
+}
