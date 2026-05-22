@@ -87,6 +87,9 @@ export default function AracDetayClient({ arac, kar, user }) {
               ) : (
                 <SatisGeriAlButonu arac={arac} onChange={refresh} />
               )}
+              <Link href={`/araclar/${arac.id}/duzenle`} className="btn btn-ghost text-sm">
+                Düzenle
+              </Link>
               <SilButonu arac={arac} />
             </div>
           )}
@@ -277,14 +280,34 @@ function Bilgi({ label, val }) {
 
 function MasraflarTab({ arac, isAdmin, onChange }) {
   const [ekleAcik, setEkleAcik] = useState(false);
-  const [form, setForm] = useState({
+  const [duzenleniyor, setDuzenleniyor] = useState(null); // düzenlenen masraf
+  const bosForm = {
     baslik: '',
     tutar: '',
     kategori: 'TAMIR',
     aciklama: '',
     tarih: new Date().toISOString().slice(0, 10),
-  });
+  };
+  const [form, setForm] = useState(bosForm);
   const [yukleniyor, setYukleniyor] = useState(false);
+
+  function duzenlemeyiAc(m) {
+    setForm({
+      baslik: m.baslik,
+      tutar: m.tutar,
+      kategori: m.kategori,
+      aciklama: m.aciklama || '',
+      tarih: new Date(m.tarih).toISOString().slice(0, 10),
+    });
+    setDuzenleniyor(m.id);
+    setEkleAcik(false);
+  }
+
+  function iptal() {
+    setDuzenleniyor(null);
+    setEkleAcik(false);
+    setForm(bosForm);
+  }
 
   async function ekle(e) {
     e.preventDefault();
@@ -296,12 +319,29 @@ function MasraflarTab({ arac, isAdmin, onChange }) {
     });
     setYukleniyor(false);
     if (r.ok) {
-      setEkleAcik(false);
-      setForm({ baslik: '', tutar: '', kategori: 'TAMIR', aciklama: '', tarih: new Date().toISOString().slice(0, 10) });
+      iptal();
       onChange();
     } else {
       const data = await r.json();
       alert(data.error || 'Eklenemedi');
+    }
+  }
+
+  async function kaydet(e) {
+    e.preventDefault();
+    setYukleniyor(true);
+    const r = await fetch(`/api/araclar/${arac.id}/masraflar?masrafId=${duzenleniyor}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    });
+    setYukleniyor(false);
+    if (r.ok) {
+      iptal();
+      onChange();
+    } else {
+      const data = await r.json();
+      alert(data.error || 'Güncellenemedi');
     }
   }
 
@@ -312,13 +352,17 @@ function MasraflarTab({ arac, isAdmin, onChange }) {
   }
 
   const toplam = arac.masraflar.reduce((s, m) => s + m.tutar, 0);
+  const formAcik = ekleAcik || duzenleniyor;
 
   return (
     <div>
       {isAdmin && (
         <div className="mb-4">
-          {ekleAcik ? (
-            <form onSubmit={ekle} className="card p-5 space-y-4">
+          {formAcik ? (
+            <form onSubmit={duzenleniyor ? kaydet : ekle} className="card p-5 space-y-4">
+              <div className="text-xs uppercase tracking-widest text-ink-500 mb-1">
+                {duzenleniyor ? 'Masrafı Düzenle' : 'Yeni Masraf'}
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="label">Başlık</label>
@@ -344,12 +388,14 @@ function MasraflarTab({ arac, isAdmin, onChange }) {
                 <input className="input" value={form.aciklama} onChange={(e) => setForm({ ...form, aciklama: e.target.value })} />
               </div>
               <div className="flex gap-2">
-                <button type="submit" className="btn btn-primary text-sm" disabled={yukleniyor}>{yukleniyor ? 'Ekleniyor...' : 'Ekle'}</button>
-                <button type="button" onClick={() => setEkleAcik(false)} className="btn btn-ghost text-sm">İptal</button>
+                <button type="submit" className="btn btn-primary text-sm" disabled={yukleniyor}>
+                  {yukleniyor ? 'Kaydediliyor...' : (duzenleniyor ? 'Kaydet' : 'Ekle')}
+                </button>
+                <button type="button" onClick={iptal} className="btn btn-ghost text-sm">İptal</button>
               </div>
             </form>
           ) : (
-            <button onClick={() => setEkleAcik(true)} className="btn btn-primary text-sm">
+            <button onClick={() => { setEkleAcik(true); setForm(bosForm); }} className="btn btn-primary text-sm">
               <span>+</span> Masraf Ekle
             </button>
           )}
@@ -369,7 +415,7 @@ function MasraflarTab({ arac, isAdmin, onChange }) {
                 <th>Başlık</th>
                 <th>Kategori</th>
                 <th className="text-right">Tutar</th>
-                {isAdmin && <th className="w-12"></th>}
+                {isAdmin && <th className="w-24"></th>}
               </tr>
             </thead>
             <tbody>
@@ -384,11 +430,19 @@ function MasraflarTab({ arac, isAdmin, onChange }) {
                   <td className="text-right mono font-medium">{formatTL(m.tutar)}</td>
                   {isAdmin && (
                     <td>
-                      <button onClick={() => sil(m.id)} className="text-ink-400 hover:text-red-700 p-1" title="Sil">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M3 6h18M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                        </svg>
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => duzenlemeyiAc(m)} className="text-ink-400 hover:text-ink-900 p-1" title="Düzenle">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                          </svg>
+                        </button>
+                        <button onClick={() => sil(m.id)} className="text-ink-400 hover:text-red-700 p-1" title="Sil">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M3 6h18M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                          </svg>
+                        </button>
+                      </div>
                     </td>
                   )}
                 </tr>

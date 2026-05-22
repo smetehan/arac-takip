@@ -41,3 +41,29 @@ export async function DELETE(req) {
     return NextResponse.json({ error: 'Silinemedi' }, { status: 500 });
   }
 }
+
+export async function PUT(req) {
+  const auth = await requireAdmin();
+  if (auth.error) return NextResponse.json({ error: auth.error }, { status: auth.status });
+
+  const url = new URL(req.url);
+  const masrafId = parseInt(url.searchParams.get('masrafId'));
+  if (!masrafId) return NextResponse.json({ error: 'masrafId gerekli' }, { status: 400 });
+
+  const data = await req.json();
+  try {
+    const masraf = await prisma.masraf.update({
+      where: { id: masrafId },
+      data: {
+        baslik: data.baslik,
+        tutar: parseFloat(data.tutar),
+        kategori: data.kategori || 'DIGER',
+        aciklama: data.aciklama || null,
+        tarih: data.tarih ? new Date(data.tarih) : undefined,
+      },
+    });
+    return NextResponse.json({ masraf });
+  } catch (e) {
+    return NextResponse.json({ error: 'Güncellenemedi: ' + e.message }, { status: 500 });
+  }
+}
