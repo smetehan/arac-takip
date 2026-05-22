@@ -129,26 +129,49 @@ export default function AracDetayClient({ arac, kar, user }) {
 function ResimGalerisi({ arac, aktifResim, setAktifResim, isAdmin, onChange }) {
   const fileRef = useRef(null);
   const [yukleniyor, setYukleniyor] = useState(false);
+  const [yuklemeIlerlemesi, setYuklemeIlerlemesi] = useState({ tamamlanan: 0, toplam: 0 });
 
   async function yukle(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
     setYukleniyor(true);
-    const fd = new FormData();
-    fd.append('file', file);
-    fd.append('aracId', String(arac.id));
-    try {
-      const r = await fetch('/api/upload', { method: 'POST', body: fd });
-      if (!r.ok) {
-        const data = await r.json();
-        alert(data.error || 'Yüklenemedi');
-      } else {
-        onChange();
+    setYuklemeIlerlemesi({ tamamlanan: 0, toplam: files.length });
+
+    const hatalar = [];
+    let basarili = 0;
+
+    // Dosyaları sırayla yükle (paralel yüklemek server'ı yorabilir)
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('aracId', String(arac.id));
+
+      try {
+        const r = await fetch('/api/upload', { method: 'POST', body: fd });
+        if (!r.ok) {
+          const data = await r.json();
+          hatalar.push(`${file.name}: ${data.error || 'Yüklenemedi'}`);
+        } else {
+          basarili++;
+        }
+      } catch (err) {
+        hatalar.push(`${file.name}: Bağlantı hatası`);
       }
-    } finally {
-      setYukleniyor(false);
-      e.target.value = '';
+
+      setYuklemeIlerlemesi({ tamamlanan: i + 1, toplam: files.length });
     }
+
+    setYukleniyor(false);
+    setYuklemeIlerlemesi({ tamamlanan: 0, toplam: 0 });
+    e.target.value = '';
+
+    if (hatalar.length > 0) {
+      alert(`${basarili}/${files.length} resim yüklendi.\n\nHatalar:\n${hatalar.join('\n')}`);
+    }
+
+    onChange();
   }
 
   async function sil(resimId) {
@@ -208,20 +231,29 @@ function ResimGalerisi({ arac, aktifResim, setAktifResim, isAdmin, onChange }) {
           <>
             <button
               onClick={() => fileRef.current?.click()}
-              className="flex-shrink-0 w-16 h-16 rounded-lg border-2 border-dashed border-ink-200 text-ink-400 hover:border-ink-900 hover:text-ink-900 transition-all flex items-center justify-center"
+              className="flex-shrink-0 h-16 px-4 rounded-lg border-2 border-dashed border-ink-200 text-ink-400 hover:border-ink-900 hover:text-ink-900 transition-all flex items-center justify-center gap-2"
               disabled={yukleniyor}
+              title="Bir veya daha fazla resim seç"
             >
               {yukleniyor ? (
-                <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 12a9 9 0 1 1-6.2-8.5"/>
-                </svg>
+                <>
+                  <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 12a9 9 0 1 1-6.2-8.5"/>
+                  </svg>
+                  <span className="text-xs mono whitespace-nowrap">
+                    {yuklemeIlerlemesi.tamamlanan}/{yuklemeIlerlemesi.toplam}
+                  </span>
+                </>
               ) : (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 5v14M5 12h14"/>
-                </svg>
+                <>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 5v14M5 12h14"/>
+                  </svg>
+                  <span className="text-xs whitespace-nowrap">Resim Ekle</span>
+                </>
               )}
             </button>
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={yukle} />
+            <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={yukle} />
           </>
         )}
       </div>
