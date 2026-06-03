@@ -41,10 +41,17 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+  {/* Stats grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
         <StatCard label="Stoktaki Araç" value={ozet.stoktakiAracSayisi} />
         <StatCard label="Satılan Araç" value={ozet.satilanAracSayisi} />
+        <StatCard label="Aktif Ortak" value={ozet.ortakSayisi} />
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
         <StatCard label="Toplam Sermaye" value={formatTL(ozet.toplamSermaye)} small />
+        <StatCard label="Stoktaki Değer" value={formatTL(ozet.stoktakiDeger)} small />
+        <StatCard label="Toplam Masraf" value={formatTL(ozet.toplamMasraf)} small />
         <StatCard
           label="Net Kâr"
           value={formatTL(ozet.toplamNetKar)}

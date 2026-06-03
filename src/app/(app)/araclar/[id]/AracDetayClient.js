@@ -264,6 +264,10 @@ function ResimGalerisi({ arac, aktifResim, setAktifResim, isAdmin, onChange }) {
 // ============== Genel Bilgiler ==============
 
 function GenelBilgiler({ arac }) {
+  const toplamMasraf = arac.masraflar.reduce((s, m) => s + m.tutar, 0);
+  const toplamMaliyet = arac.alimFiyati + toplamMasraf;
+  const net = arac.satimFiyati != null ? arac.satimFiyati - toplamMaliyet : null;
+
   return (
     <div className="grid md:grid-cols-2 gap-6">
       <div className="card p-6">
@@ -287,6 +291,42 @@ function GenelBilgiler({ arac }) {
           <Bilgi label="Satım Fiyatı" val={arac.satimFiyati ? <span className="mono">{formatTL(arac.satimFiyati)}</span> : '—'} />
           <Bilgi label="Alıcı" val={arac.alici || '—'} />
         </dl>
+      </div>
+
+      {/* Mali Özet */}
+      <div className="card p-6 md:col-span-2">
+        <h3 className="heading text-lg mb-4">Mali Özet</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div>
+            <div className="text-xs uppercase tracking-wider text-ink-500 mb-1">Alım Fiyatı</div>
+            <div className="mono text-lg font-medium">{formatTL(arac.alimFiyati)}</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-wider text-ink-500 mb-1">Toplam Masraf</div>
+            <div className="mono text-lg font-medium">{formatTL(toplamMasraf)}</div>
+            <div className="text-xs text-ink-500 mt-0.5">{arac.masraflar.length} kalem</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-wider text-ink-500 mb-1">Toplam Maliyet</div>
+            <div className="mono text-lg font-medium">{formatTL(toplamMaliyet)}</div>
+            <div className="text-xs text-ink-500 mt-0.5">alım + masraf</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-wider text-ink-500 mb-1">Net Kâr/Zarar</div>
+            {net !== null ? (
+              <>
+                <div className={`mono text-lg font-medium ${net >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                  {net >= 0 ? '+' : ''}{formatTL(net)}
+                </div>
+                <div className="text-xs text-ink-500 mt-0.5">
+                  %{((net / toplamMaliyet) * 100).toFixed(1)} {net >= 0 ? 'kâr' : 'zarar'}
+                </div>
+              </>
+            ) : (
+              <div className="text-lg text-ink-400">—</div>
+            )}
+          </div>
+        </div>
       </div>
 
       {arac.notlar && (

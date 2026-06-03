@@ -63,7 +63,8 @@ export default async function AraclarPage({ searchParams }) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {araclar.map((a) => {
             const masraf = a.masraflar.reduce((s, m) => s + m.tutar, 0);
-            const net = a.satimFiyati ? a.satimFiyati - a.alimFiyati - masraf : null;
+            const toplamMaliyet = a.alimFiyati + masraf;
+            const net = a.satimFiyati ? a.satimFiyati - toplamMaliyet : null;
             const resim = a.resimler[0]?.url;
 
             return (
@@ -92,22 +93,26 @@ export default async function AraclarPage({ searchParams }) {
                   <h3 className="heading text-xl mb-1">{a.marka} {a.model}</h3>
                   <div className="text-xs text-ink-500 mb-3 mono">{formatNumber(a.km)} km{a.plaka ? ` · ${a.plaka}` : ''}</div>
 
-                  <div className="flex items-center justify-between pt-3 border-t border-ink-100">
-                    <div>
-                      <div className="text-xs text-ink-500">Alım</div>
-                      <div className="mono text-sm font-medium">{formatTL(a.alimFiyati)}</div>
+                  {/* Mali bilgiler */}
+                  <div className="pt-3 border-t border-ink-100 space-y-1.5 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-ink-500">Alım</span>
+                      <span className="mono">{formatTL(a.alimFiyati)}</span>
                     </div>
-                    {net !== null ? (
-                      <div className="text-right">
-                        <div className="text-xs text-ink-500">Net</div>
-                        <div className={`mono text-sm font-medium ${net >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                    <div className="flex justify-between">
+                      <span className="text-ink-500">Masraf ({a.masraflar.length})</span>
+                      <span className="mono">{formatTL(masraf)}</span>
+                    </div>
+                    <div className="flex justify-between font-medium pt-1.5 border-t border-ink-100">
+                      <span>Toplam Maliyet</span>
+                      <span className="mono">{formatTL(toplamMaliyet)}</span>
+                    </div>
+                    {net !== null && (
+                      <div className="flex justify-between pt-1.5 border-t border-ink-100">
+                        <span className="text-ink-500">Net</span>
+                        <span className={`mono font-medium ${net >= 0 ? 'text-green-700' : 'text-red-700'}`}>
                           {net >= 0 ? '+' : ''}{formatTL(net)}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-right">
-                        <div className="text-xs text-ink-500">Tarih</div>
-                        <div className="text-sm">{formatDate(a.alimTarihi)}</div>
+                        </span>
                       </div>
                     )}
                   </div>
