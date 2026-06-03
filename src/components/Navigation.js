@@ -34,12 +34,12 @@ export default function Navigation({ user }) {
           {linkler.map((l) => {
             const aktif = pathname === l.href || pathname.startsWith(l.href + '/');
             return (
-              <Link
+             <Link
                 key={l.href}
                 href={l.href}
                 className={`px-4 py-2 rounded-full text-sm transition-colors ${
                   aktif
-                    ? 'bg-ink-900 text-bg'
+                    ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200'
                     : 'text-ink-600 hover:bg-ink-100'
                 }`}
               >
@@ -69,7 +69,7 @@ export default function Navigation({ user }) {
               key={l.href}
               href={l.href}
               className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap ${
-                aktif ? 'bg-ink-900 text-bg' : 'text-ink-600 bg-ink-100'
+                aktif ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200' : 'text-ink-600 bg-ink-100'
               }`}
             >
               {l.label}
