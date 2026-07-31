@@ -1,37 +1,124 @@
 // src/lib/ilan/templates.jsx
-// Şablon registry: her tema tek bir `ilanData` objesi + `qr` node alır.
-// Yeni tema eklemek için: bir Component yaz, TEMPLATES'e bir satır ekle. Başka yeri değiştirme.
+// Tek düzen (fotoğraflı iki sütun) + çoklu renk teması.
+// Boya & Değişen şeması (13 parça) + lejant dahil.
+// Yeni tema eklemek: THEMES'e bir satır ekle. Yeni DÜZEN eklemek: yeni Component + TEMPLATES satırı.
 
 export const fmtTL = (n) =>
   new Intl.NumberFormat('tr-TR').format(Number(String(n ?? '').replace(/[^\d]/g, '')) || 0);
 
-/* =========================================================
-   TEMA 1 — KURUMSAL MAVİ (fotoğraflı, iki sütun)
-   ========================================================= */
-function Mavi({ data: d, qr }) {
+/* ================= TEMALAR ================= */
+export const THEMES = {
+  mavi:  { ad: 'Kurumsal Mavi',  paper:'#F5F8FC', card:'#fff', dark:'#0E2A4E', acc:'#2F80D6', acc2:'#1E5FA8', ink:'#0E2A4E', mut:'#5A6B80', line:'#DCE5EF', tint:'#EAF1FA' },
+  altin: { ad: 'Antrasit Altın', paper:'#F7F7F4', card:'#fff', dark:'#14181F', acc:'#C6902F', acc2:'#B0821F', ink:'#14181F', mut:'#6C7480', line:'#E7E4DC', tint:'#F0ECE2' },
+  zumrut:{ ad: 'Zümrüt Yeşil',   paper:'#F2FAF6', card:'#fff', dark:'#0C2E22', acc:'#12A36B', acc2:'#0E7A50', ink:'#0C2E22', mut:'#4B6157', line:'#D6EBE0', tint:'#E4F5EC' },
+  bordo: { ad: 'Bordo',          paper:'#FAF5F6', card:'#fff', dark:'#2A1418', acc:'#B0324B', acc2:'#8E2740', ink:'#2A1418', mut:'#6E5257', line:'#EBDCDF', tint:'#F6E9EC' },
+};
+const themeVars = (t) => ({
+  '--paper': t.paper, '--card': t.card, '--dark': t.dark, '--acc': t.acc, '--acc2': t.acc2,
+  '--ink': t.ink, '--mut': t.mut, '--line': t.line, '--tint': t.tint,
+});
+
+/* ================= BOYA & DEĞİŞEN ================= */
+// Tepeden araç silueti — her parça bir path/rect (tıklanabilir + renklenebilir).
+export const PANELS = [
+  { id:'onTampon',    ad:'Ön Tampon',         d:'M48,58 L48,40 Q48,22 70,22 L170,22 Q192,22 192,40 L192,58 Z' },
+  { id:'kaput',       ad:'Kaput',             d:'M82,60 L158,60 L166,150 L74,150 Z' },
+  { id:'solOnCam',    ad:'Sol Ön Çamurluk',   d:'M50,60 L72,60 L72,150 L50,150 Q43,105 50,60 Z' },
+  { id:'sagOnCam',    ad:'Sağ Ön Çamurluk',   d:'M168,60 L190,60 Q197,105 190,150 L168,150 Z' },
+  { id:'tavan',       ad:'Tavan',             rect:{ x:74, y:186, w:92, h:114, rx:12 } },
+  { id:'solOnKapi',   ad:'Sol Ön Kapı',       rect:{ x:48, y:188, w:26, h:54, rx:3 } },
+  { id:'solArkaKapi', ad:'Sol Arka Kapı',     rect:{ x:48, y:244, w:26, h:54, rx:3 } },
+  { id:'sagOnKapi',   ad:'Sağ Ön Kapı',       rect:{ x:166, y:188, w:26, h:54, rx:3 } },
+  { id:'sagArkaKapi', ad:'Sağ Arka Kapı',     rect:{ x:166, y:244, w:26, h:54, rx:3 } },
+  { id:'bagaj',       ad:'Bagaj Kapağı',      d:'M74,336 L166,336 L160,422 L80,422 Z' },
+  { id:'solArkaCam',  ad:'Sol Arka Çamurluk', d:'M50,336 Q43,380 50,422 L72,422 L72,336 Z' },
+  { id:'sagArkaCam',  ad:'Sağ Arka Çamurluk', d:'M168,336 L190,336 Q197,380 190,422 L168,422 Z' },
+  { id:'arkaTampon',  ad:'Arka Tampon',       d:'M48,424 L192,424 L192,442 Q192,460 170,460 L70,460 Q48,460 48,442 Z' },
+];
+export const STATES = {
+  orijinal: { ad:'Orijinal',     renk:'#D6DCE4' },
+  lokal:    { ad:'Lokal Boyalı', renk:'#FBBF24' },
+  boyali:   { ad:'Boyalı',       renk:'#F97316' },
+  degisen:  { ad:'Değişen',      renk:'#EF4444' },
+};
+export const CYCLE = ['orijinal', 'lokal', 'boyali', 'degisen'];
+
+// Araç şeması. boya = { panelId: 'boyali' | 'degisen' | ... }. onPanel verilirse tıklanabilir.
+export function CarDiagram({ boya = {}, onPanel = null, style }) {
+  const stroke = '#8A96A6';
   return (
-    <div className="ilan-sheet t-mavi">
+    <svg viewBox="0 0 240 480" xmlns="http://www.w3.org/2000/svg" style={style}>
+      {/* tekerlekler (dekor, arkada) */}
+      <g fill="#2B3340">
+        <rect x="34" y="86" width="13" height="46" rx="6" />
+        <rect x="193" y="86" width="13" height="46" rx="6" />
+        <rect x="34" y="344" width="13" height="46" rx="6" />
+        <rect x="193" y="344" width="13" height="46" rx="6" />
+      </g>
+
+      {/* boyanabilir parçalar */}
+      {PANELS.map((p) => {
+        const st = boya[p.id] || 'orijinal';
+        const common = {
+          fill: STATES[st].renk, stroke, strokeWidth: 1.4, strokeLinejoin: 'round',
+          onClick: onPanel ? () => onPanel(p.id) : undefined,
+          style: onPanel ? { cursor: 'pointer' } : undefined,
+        };
+        return p.d
+          ? <path key={p.id} d={p.d} {...common}>{onPanel ? <title>{p.ad}</title> : null}</path>
+          : <rect key={p.id} x={p.rect.x} y={p.rect.y} width={p.rect.w} height={p.rect.h} rx={p.rect.rx} {...common}>{onPanel ? <title>{p.ad}</title> : null}</rect>;
+      })}
+
+      {/* camlar + aynalar (dekor, üstte) */}
+      <path d="M74,152 L166,152 L158,185 L82,185 Z" fill="#C4D0DD" stroke={stroke} strokeWidth="1.1" />
+      <path d="M82,301 L158,301 L166,334 L74,334 Z" fill="#C4D0DD" stroke={stroke} strokeWidth="1.1" />
+      <rect x="40" y="176" width="10" height="13" rx="3" fill="#AEB6C2" />
+      <rect x="190" y="176" width="10" height="13" rx="3" fill="#AEB6C2" />
+
+      <text x="120" y="13" textAnchor="middle" fontSize="10" fontWeight="700" fill="#94A3B8" fontFamily="Inter" letterSpacing="1">ÖN</text>
+    </svg>
+  );
+}
+
+function boyaOzet(boya) {
+  const grup = (k) => PANELS.filter((p) => boya[p.id] === k).map((p) => p.ad);
+  const degisen = grup('degisen');
+  const boyali = [...grup('boyali'), ...grup('lokal')];
+  return { degisen, boyali };
+}
+
+/* ================= DÜZEN (tek, tema parametreli) ================= */
+function Layout({ data: d, qr, theme }) {
+  const t = THEMES[theme] || THEMES.mavi;
+  const { degisen, boyali } = boyaOzet(d.boya || {});
+  const cells = [
+    ['Kilometre', <span className="mono" key="km">{fmtTL(d.km)} <small>km</small></span>],
+    ['Yakıt', d.yakit || '—'],
+    ['Vites', d.vites || '—'],
+    ['Motor Gücü', <span className="mono" key="g">{d.guc || '—'}</span>],
+    ['Kasa', d.kasa || '—'],
+    ['Renk', d.renk || '—'],
+  ];
+  return (
+    <div className="ilan-sheet" style={themeVars(t)}>
       <header className="head">
         <div className="brand">
-          <div className="mono-logo">{d.galeri.mono}</div>
-          <div>
-            <div className="b-name">{d.galeri.ad}</div>
-            <div className="b-sub">{d.galeri.alt}</div>
-          </div>
+          <div className="logo">{d.galeri.mono}</div>
+          <div><div className="bname">{d.galeri.ad}</div><div className="bsub">{d.galeri.alt}</div></div>
         </div>
-        <div className="head-right">
-          <div className="stock"><div className="k">Stok No</div><div className="v">A-{d.stok}</div></div>
+        <div className="hr">
+          <div className="stk"><div className="k">Stok No</div><div className="v">A-{d.stok}</div></div>
           <div className="tag">Satılık</div>
         </div>
       </header>
 
       <div className="main">
-        <div className="col-photo">
+        <div className="cph">
           <div className="photo">
             {d.foto ? <img src={d.foto} alt={`${d.marka} ${d.model}`} /> : <div className="photo-empty">Fotoğraf yok</div>}
-            <div className="year-badge">{d.yil} Model</div>
+            <div className="yb">{d.yil} Model</div>
           </div>
-          <div className="car-block">
+          <div className="cb">
             <div className="car">{d.marka} <span>{d.model}</span></div>
             <div className="trim">{d.altbaslik}</div>
             <div className="chips">
@@ -40,234 +127,128 @@ function Mavi({ data: d, qr }) {
           </div>
         </div>
 
-        <div className="col-specs">
-          <div className="specs-title">Teknik Özellikler</div>
+        <div className="csp">
+          <div className="st">Teknik Özellikler</div>
           <div className="grid">
-            <div className="cell"><div className="lab">Kilometre</div><div className="val mono">{fmtTL(d.km)} <small>km</small></div></div>
-            <div className="cell"><div className="lab">Yakıt</div><div className="val">{d.yakit || '—'}</div></div>
-            <div className="cell"><div className="lab">Vites</div><div className="val">{d.vites || '—'}</div></div>
-            <div className="cell"><div className="lab">Motor Gücü</div><div className="val mono">{d.guc || '—'}</div></div>
-            <div className="cell"><div className="lab">Kasa Tipi</div><div className="val">{d.kasa || '—'}</div></div>
-            <div className="cell"><div className="lab">Renk</div><div className="val">{d.renk || '—'}</div></div>
-            <div className="cell"><div className="lab">Çekiş</div><div className="val">{d.cekis || '—'}</div></div>
-            <div className="cell"><div className="lab">Hasar / Boya</div><div className="val"><span className="ok">{d.hasar || '—'}</span></div></div>
+            {cells.map((c, i) => (
+              <div key={i} className="cell"><div className="lab">{c[0]}</div><div className="val">{c[1]}</div></div>
+            ))}
           </div>
-        </div>
-      </div>
 
-      <footer className="foot">
-        <div className="price">
-          <div className="p-lab">Fiyat</div>
-          <div className="amount"><span>₺</span>{d.fiyat ? fmtTL(d.fiyat) : '—'}</div>
-          <div className="p-note">Pazarlık payı vardır · Takas / kredi olur</div>
-        </div>
-        <div className="contact">
-          <div className="c-lab">İletişim</div>
-          <div className="phone">{d.tel}</div>
-          <div className="addr">{d.galeri.ad} · {d.galeri.adres}</div>
-        </div>
-        <div className="qr-wrap">
-          <div className="qr">{qr}</div>
-          <div className="qr-cap">İlan Detayı</div>
-        </div>
-      </footer>
-    </div>
-  );
-}
-
-/* =========================================================
-   TEMA 2 — LACİVERT ALTIN (spec-sheet, premium)
-   ========================================================= */
-function Altin({ data: d, qr }) {
-  const specs = [
-    ['Kilometre', <span className="mono" key="km">{fmtTL(d.km)} <small>km</small></span>],
-    ['Yakıt', d.yakit || '—'],
-    ['Vites', d.vites || '—'],
-    ['Motor Gücü', <span className="mono" key="g">{d.guc || '—'}</span>],
-    ['Kasa Tipi', d.kasa || '—'],
-    ['Renk', d.renk || '—'],
-    ['Çekiş', d.cekis || '—'],
-    ['Hasar / Boya', <span className="ok" key="h">{d.hasar || '—'}</span>],
-  ];
-  return (
-    <div className="ilan-sheet t-altin">
-      <header className="head">
-        <div className="brand">
-          <div className="mono-logo">{d.galeri.mono}</div>
-          <div>
-            <div className="b-name">{d.galeri.ad}</div>
-            <div className="b-sub">{d.galeri.alt}</div>
-          </div>
-        </div>
-        <div className="head-right">
-          <div className="stock"><div className="k">Stok No</div><div className="v">A-{d.stok}</div></div>
-          <div className="tag">Satılık</div>
-        </div>
-      </header>
-
-      <section className="hero">
-        <div>
-          <span className="year">{d.yil} Model</span>
-          <div className="car">{d.marka} <span>{d.model}</span></div>
-          <div className="trim">{d.altbaslik}</div>
-        </div>
-        <div className="chips">
-          {d.chips.map((c, i) => <span key={c} className={'chip' + (i === 0 ? ' hl' : '')}>{c}</span>)}
-        </div>
-      </section>
-
-      <div className="ticks">
-        {Array.from({ length: 40 }).map((_, i) => <i key={i} className={i % 5 === 0 ? 'big' : ''} />)}
-      </div>
-
-      <section className="specs">
-        {specs.map((s, i) => {
-          const cls = ['cell'];
-          if (i % 4 !== 3) cls.push('br');
-          if (i % 4 !== 0) cls.push('pl');
-          if (i >= 4) cls.push('bt');
-          return (
-            <div key={i} className={cls.join(' ')}>
-              <div className="lab">{s[0]}</div>
-              <div className="val">{s[1]}</div>
+          <div className="boya">
+            <div className="dg"><CarDiagram boya={d.boya || {}} /></div>
+            <div className="info">
+              <div className="bt">Boya & Değişen</div>
+              <div className="lg">
+                {Object.entries(STATES).map(([k, s]) => (
+                  <div key={k} className="r"><span className="d" style={{ background: s.renk }} />{s.ad}</div>
+                ))}
+              </div>
+              <div className="summ">
+                <div><b>Değişen:</b> {degisen.length ? degisen.join(', ') : 'Yok'}</div>
+                <div style={{ marginTop: 4 }}><b>Boyalı:</b> {boyali.length ? boyali.join(', ') : 'Yok'}</div>
+              </div>
             </div>
-          );
-        })}
-      </section>
+          </div>
+        </div>
+      </div>
 
       <footer className="foot">
-        <div className="price">
-          <div className="p-lab">Fiyat</div>
-          <div className="amount"><span>₺</span>{d.fiyat ? fmtTL(d.fiyat) : '—'}</div>
-          <div className="p-note">Pazarlık payı vardır · Takas / kredi olur</div>
+        <div>
+          <div className="plab">Fiyat</div>
+          <div className="amt"><span>₺</span>{d.fiyat ? fmtTL(d.fiyat) : '—'}</div>
+          <div className="pnote">Pazarlık payı vardır · Takas / kredi olur</div>
         </div>
         <div className="contact">
-          <div className="c-lab">İletişim</div>
+          <div className="clab">İletişim</div>
           <div className="phone">{d.tel}</div>
           <div className="addr">{d.galeri.ad} · {d.galeri.adres}</div>
         </div>
-        <div className="qr-wrap">
-          <div className="qr">{qr}</div>
-          <div className="qr-cap">İlan Detayı</div>
-        </div>
+        <div className="qrw"><div className="qr">{qr}</div><div className="qrc">İlan Detayı</div></div>
       </footer>
     </div>
   );
 }
 
-/* =========================================================
-   REGISTRY
-   ========================================================= */
-export const TEMPLATES = {
-  mavi:  { ad: 'Kurumsal Mavi',  ds: 'Fotoğraflı · iki sütun', sw: 'linear-gradient(135deg,#2F80D6,#0E2A4E)', Component: Mavi },
-  altin: { ad: 'Lacivert Altın', ds: 'Spec-sheet · premium',   sw: 'linear-gradient(135deg,#C6902F,#14181F)', Component: Altin },
-};
+/* ================= REGISTRY (her tema bir şablon) ================= */
+export const TEMPLATES = Object.fromEntries(
+  Object.entries(THEMES).map(([id, t]) => [
+    id,
+    {
+      ad: t.ad,
+      ds: 'Fotoğraflı · boya şemalı',
+      sw: `linear-gradient(135deg,${t.acc},${t.dark})`,
+      Component: (props) => <Layout {...props} theme={id} />,
+    },
+  ])
+);
 
-/* =========================================================
-   SCOPED CSS  (tüm stiller .ilan-sheet altında; app'in Tailwind'ini etkilemez)
-   ========================================================= */
+/* ================= SCOPED CSS ================= */
 export const ILAN_CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@500;600;700&display=swap');
 
-.ilan-sheet{ font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+.ilan-sheet{ font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; width:297mm; height:210mm; display:flex; flex-direction:column; overflow:hidden; background:var(--paper); color:var(--ink); }
 .ilan-sheet *{ box-sizing:border-box; margin:0; padding:0; }
 .ilan-sheet .mono{ font-family:'Spline Sans Mono',monospace; }
 
-/* ===== MAVİ ===== */
-.t-mavi{ width:297mm; height:210mm; background:#F5F8FC; display:flex; flex-direction:column; overflow:hidden; color:#0E2A4E; }
-.t-mavi .head{ background:#0E2A4E; color:#fff; padding:9mm 13mm 8mm; display:flex; align-items:center; justify-content:space-between; position:relative; }
-.t-mavi .head::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:3px; background:linear-gradient(90deg,#2F80D6,#1E5FA8 45%,transparent); }
-.t-mavi .brand{ display:flex; align-items:center; gap:14px; }
-.t-mavi .mono-logo{ width:50px; height:50px; border-radius:12px; background:linear-gradient(135deg,#2F80D6,#1E5FA8); display:grid; place-items:center; font-family:'Archivo'; font-weight:900; font-size:23px; color:#fff; }
-.t-mavi .b-name{ font-family:'Archivo'; font-weight:800; font-size:23px; letter-spacing:.02em; line-height:1; }
-.t-mavi .b-sub{ font-size:10.5px; color:#9FB4CE; letter-spacing:.28em; text-transform:uppercase; margin-top:6px; }
-.t-mavi .head-right{ display:flex; align-items:center; gap:16px; }
-.t-mavi .stock{ text-align:right; line-height:1.2; }
-.t-mavi .stock .k{ font-size:9.5px; letter-spacing:.24em; color:#7E93AE; text-transform:uppercase; }
-.t-mavi .stock .v{ font-family:'Spline Sans Mono'; font-weight:600; font-size:15px; }
-.t-mavi .tag{ font-family:'Archivo'; font-weight:800; font-size:14px; letter-spacing:.16em; background:#2F80D6; color:#fff; padding:9px 15px; border-radius:8px; text-transform:uppercase; }
-.t-mavi .main{ flex:1; display:grid; grid-template-columns:1.15fr 1fr; min-height:0; }
-.t-mavi .col-photo{ padding:8mm 6mm 7mm 13mm; display:flex; flex-direction:column; min-height:0; }
-.t-mavi .photo{ flex:1; min-height:0; border-radius:14px; overflow:hidden; position:relative; background:#EAF1FA; }
-.t-mavi .photo img{ width:100%; height:100%; object-fit:cover; display:block; }
-.t-mavi .photo-empty{ width:100%; height:100%; display:grid; place-items:center; color:#89ABD1; font-size:14px; }
-.t-mavi .year-badge{ position:absolute; top:12px; left:12px; font-family:'Spline Sans Mono'; font-weight:700; font-size:14px; color:#fff; background:#0E2A4E; border-radius:8px; padding:6px 13px; letter-spacing:.04em; }
-.t-mavi .car-block{ margin-top:7mm; }
-.t-mavi .car{ font-family:'Archivo'; font-weight:900; font-size:52px; line-height:.9; letter-spacing:-.02em; }
-.t-mavi .car span{ color:#2F80D6; }
-.t-mavi .trim{ font-size:15px; color:#5A6B80; font-weight:500; margin-top:9px; }
-.t-mavi .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
-.t-mavi .chip{ font-size:12px; font-weight:600; border-radius:999px; padding:6px 14px; background:#fff; color:#1E5FA8; border:1px solid #DCE5EF; }
-.t-mavi .chip.hl{ background:#1E5FA8; color:#fff; border-color:#1E5FA8; }
-.t-mavi .col-specs{ background:#fff; border-left:1px solid #DCE5EF; padding:9mm 13mm 8mm 11mm; display:flex; flex-direction:column; }
-.t-mavi .specs-title{ font-size:11px; font-weight:700; letter-spacing:.2em; color:#1E5FA8; text-transform:uppercase; margin-bottom:6mm; }
-.t-mavi .grid{ display:grid; grid-template-columns:1fr 1fr; flex:1; }
-.t-mavi .cell{ padding-bottom:5mm; }
-.t-mavi .cell:nth-child(odd){ padding-right:8mm; border-right:1px solid #DCE5EF; }
-.t-mavi .cell:nth-child(even){ padding-left:8mm; }
-.t-mavi .cell:nth-child(n+3){ padding-top:5mm; border-top:1px solid #DCE5EF; }
-.t-mavi .lab{ font-size:10px; font-weight:600; letter-spacing:.14em; color:#5A6B80; text-transform:uppercase; margin-bottom:7px; }
-.t-mavi .val{ font-family:'Archivo'; font-weight:700; font-size:22px; color:#0E2A4E; line-height:1.05; }
-.t-mavi .val small{ font-size:13px; color:#5A6B80; font-weight:600; font-family:'Inter'; }
-.t-mavi .ok{ color:#159a54; }
-.t-mavi .foot{ background:#0E2A4E; color:#fff; padding:7mm 13mm; display:grid; grid-template-columns:1.05fr 1fr auto; align-items:center; gap:22px; position:relative; }
-.t-mavi .foot::before{ content:""; position:absolute; left:0; right:0; top:0; height:3px; background:linear-gradient(90deg,transparent,#1E5FA8 55%,#2F80D6); }
-.t-mavi .p-lab,.t-mavi .c-lab{ font-size:10.5px; letter-spacing:.24em; color:#7E93AE; text-transform:uppercase; margin-bottom:6px; }
-.t-mavi .amount{ font-family:'Spline Sans Mono'; font-weight:700; font-size:48px; line-height:.9; }
-.t-mavi .amount span{ font-size:28px; color:#2F80D6; margin-right:4px; }
-.t-mavi .p-note{ font-size:12px; color:#9FB4CE; margin-top:8px; }
-.t-mavi .contact{ border-left:1px solid rgba(255,255,255,.14); padding-left:22px; }
-.t-mavi .phone{ font-family:'Spline Sans Mono'; font-weight:700; font-size:28px; }
-.t-mavi .addr{ font-size:12px; color:#9FB4CE; margin-top:7px; line-height:1.5; }
-.t-mavi .qr-wrap{ display:flex; flex-direction:column; align-items:center; gap:6px; }
-.t-mavi .qr{ width:90px; height:90px; border-radius:10px; background:#fff; padding:7px; }
-.t-mavi .qr svg{ width:100%; height:100%; display:block; }
-.t-mavi .qr-cap{ font-size:9px; letter-spacing:.14em; color:#7E93AE; text-transform:uppercase; }
+.ilan-sheet .head{ background:var(--dark); color:#fff; padding:9mm 13mm 8mm; display:flex; align-items:center; justify-content:space-between; position:relative; }
+.ilan-sheet .head::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:3px; background:linear-gradient(90deg,var(--acc),var(--acc2) 45%,transparent); }
+.ilan-sheet .brand{ display:flex; align-items:center; gap:14px; }
+.ilan-sheet .logo{ width:50px; height:50px; border-radius:12px; background:linear-gradient(135deg,var(--acc),var(--acc2)); display:grid; place-items:center; font-family:'Archivo'; font-weight:900; font-size:23px; color:#fff; }
+.ilan-sheet .bname{ font-family:'Archivo'; font-weight:800; font-size:23px; letter-spacing:.02em; line-height:1; }
+.ilan-sheet .bsub{ font-size:10.5px; color:rgba(255,255,255,.6); letter-spacing:.28em; text-transform:uppercase; margin-top:6px; }
+.ilan-sheet .hr{ display:flex; align-items:center; gap:16px; }
+.ilan-sheet .stk{ text-align:right; line-height:1.2; }
+.ilan-sheet .stk .k{ font-size:9.5px; letter-spacing:.24em; color:rgba(255,255,255,.5); text-transform:uppercase; }
+.ilan-sheet .stk .v{ font-family:'Spline Sans Mono'; font-weight:600; font-size:15px; }
+.ilan-sheet .tag{ font-family:'Archivo'; font-weight:800; font-size:14px; letter-spacing:.16em; background:var(--acc); color:#fff; padding:9px 15px; border-radius:8px; text-transform:uppercase; }
 
-/* ===== ALTIN ===== */
-.t-altin{ width:297mm; height:210mm; background:#F7F7F4; display:flex; flex-direction:column; overflow:hidden; color:#14181F; }
-.t-altin .head{ background:#14181F; color:#fff; padding:11mm 14mm 9mm; display:flex; align-items:center; justify-content:space-between; position:relative; }
-.t-altin .head::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:3px; background:linear-gradient(90deg,#C6902F,#E0B45A 40%,transparent); }
-.t-altin .brand{ display:flex; align-items:center; gap:14px; }
-.t-altin .mono-logo{ width:52px; height:52px; border-radius:12px; border:1.5px solid #C6902F; display:grid; place-items:center; font-family:'Archivo'; font-weight:900; font-size:24px; color:#E0B45A; }
-.t-altin .b-name{ font-family:'Archivo'; font-weight:800; font-size:24px; letter-spacing:.02em; line-height:1; }
-.t-altin .b-sub{ font-size:11px; color:#A9B0BA; letter-spacing:.28em; text-transform:uppercase; margin-top:6px; }
-.t-altin .head-right{ display:flex; align-items:center; gap:18px; }
-.t-altin .stock{ text-align:right; line-height:1.2; }
-.t-altin .stock .k{ font-size:10px; letter-spacing:.24em; color:#8A929D; text-transform:uppercase; }
-.t-altin .stock .v{ font-family:'Spline Sans Mono'; font-weight:600; font-size:15px; }
-.t-altin .tag{ font-family:'Archivo'; font-weight:800; font-size:15px; letter-spacing:.16em; color:#14181F; background:#E0B45A; padding:9px 16px; border-radius:8px; text-transform:uppercase; }
-.t-altin .hero{ padding:9mm 14mm 4mm; display:flex; align-items:flex-end; justify-content:space-between; gap:20px; }
-.t-altin .year{ display:inline-block; font-family:'Spline Sans Mono'; font-weight:600; font-size:15px; color:#C6902F; border:1.5px solid #C6902F; border-radius:6px; padding:3px 12px; letter-spacing:.06em; margin-bottom:10px; }
-.t-altin .car{ font-family:'Archivo'; font-weight:900; font-size:66px; line-height:.92; letter-spacing:-.02em; }
-.t-altin .car span{ color:#C6902F; }
-.t-altin .trim{ font-size:17px; color:#6C7480; font-weight:500; margin-top:10px; }
-.t-altin .chips{ display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
-.t-altin .chip{ font-size:12.5px; font-weight:600; border-radius:999px; padding:7px 15px; white-space:nowrap; background:#fff; border:1px solid #E4E2DA; }
-.t-altin .chip.hl{ background:#14181F; color:#fff; border-color:#14181F; }
-.t-altin .ticks{ margin:8mm 14mm 0; height:14px; display:flex; align-items:flex-end; }
-.t-altin .ticks i{ flex:1; height:6px; background:#E4E2DA; }
-.t-altin .ticks i.big{ height:14px; background:#C6902F; }
-.t-altin .specs{ padding:7mm 14mm 4mm; display:grid; grid-template-columns:repeat(4,1fr); flex:1; }
-.t-altin .cell{ padding-bottom:5mm; }
-.t-altin .cell.br{ border-right:1px solid #E4E2DA; padding-right:6mm; }
-.t-altin .cell.pl{ padding-left:6mm; }
-.t-altin .cell.bt{ border-top:1px solid #E4E2DA; padding-top:5mm; }
-.t-altin .lab{ font-size:11px; font-weight:600; letter-spacing:.16em; color:#6C7480; text-transform:uppercase; margin-bottom:8px; }
-.t-altin .val{ font-family:'Archivo'; font-weight:700; font-size:24px; color:#101826; line-height:1.05; }
-.t-altin .val small{ font-size:14px; color:#6C7480; font-weight:600; font-family:'Inter'; }
-.t-altin .ok{ color:#1f7a3d; }
-.t-altin .foot{ background:#14181F; color:#fff; padding:8mm 14mm; display:grid; grid-template-columns:1.1fr 1fr auto; align-items:center; gap:22px; position:relative; }
-.t-altin .foot::before{ content:""; position:absolute; left:0; right:0; top:0; height:3px; background:linear-gradient(90deg,transparent,#E0B45A 60%,#C6902F); }
-.t-altin .p-lab,.t-altin .c-lab{ font-size:11px; letter-spacing:.24em; color:#8A929D; text-transform:uppercase; margin-bottom:6px; }
-.t-altin .amount{ font-family:'Spline Sans Mono'; font-weight:700; font-size:52px; line-height:.9; color:#E0B45A; }
-.t-altin .amount span{ font-size:30px; color:#fff; margin-right:4px; }
-.t-altin .p-note{ font-size:12.5px; color:#B7BEC8; margin-top:9px; }
-.t-altin .contact{ border-left:1px solid rgba(255,255,255,.14); padding-left:22px; }
-.t-altin .phone{ font-family:'Spline Sans Mono'; font-weight:700; font-size:30px; }
-.t-altin .addr{ font-size:12.5px; color:#A9B0BA; margin-top:8px; line-height:1.5; }
-.t-altin .qr-wrap{ display:flex; flex-direction:column; align-items:center; gap:7px; }
-.t-altin .qr{ width:96px; height:96px; border-radius:10px; background:#fff; padding:8px; }
-.t-altin .qr svg{ width:100%; height:100%; display:block; }
-.t-altin .qr-cap{ font-size:9.5px; letter-spacing:.14em; color:#8A929D; text-transform:uppercase; }
+.ilan-sheet .main{ flex:1; display:grid; grid-template-columns:1.1fr 1fr; min-height:0; }
+.ilan-sheet .cph{ padding:8mm 6mm 7mm 13mm; display:flex; flex-direction:column; min-height:0; }
+.ilan-sheet .photo{ flex:1; min-height:0; border-radius:14px; overflow:hidden; position:relative; background:var(--tint); }
+.ilan-sheet .photo img{ width:100%; height:100%; object-fit:cover; display:block; }
+.ilan-sheet .photo-empty{ width:100%; height:100%; display:grid; place-items:center; color:var(--mut); font-size:14px; }
+.ilan-sheet .yb{ position:absolute; top:12px; left:12px; font-family:'Spline Sans Mono'; font-weight:700; font-size:14px; color:#fff; background:var(--dark); border-radius:8px; padding:6px 13px; }
+.ilan-sheet .cb{ margin-top:6mm; }
+.ilan-sheet .car{ font-family:'Archivo'; font-weight:900; font-size:50px; line-height:.9; letter-spacing:-.02em; }
+.ilan-sheet .car span{ color:var(--acc); }
+.ilan-sheet .trim{ font-size:15px; color:var(--mut); font-weight:500; margin-top:8px; }
+.ilan-sheet .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:11px; }
+.ilan-sheet .chip{ font-size:12px; font-weight:600; border-radius:999px; padding:6px 14px; background:#fff; color:var(--acc2); border:1px solid var(--line); }
+.ilan-sheet .chip.hl{ background:var(--acc2); color:#fff; border-color:var(--acc2); }
+
+.ilan-sheet .csp{ background:var(--card); border-left:1px solid var(--line); padding:8mm 12mm 7mm 11mm; display:flex; flex-direction:column; min-height:0; }
+.ilan-sheet .st{ font-size:11px; font-weight:700; letter-spacing:.2em; color:var(--acc2); text-transform:uppercase; margin-bottom:4mm; }
+.ilan-sheet .grid{ display:grid; grid-template-columns:1fr 1fr 1fr; }
+.ilan-sheet .cell{ padding:0 0 4mm; }
+.ilan-sheet .cell:not(:nth-child(3n)){ padding-right:5mm; }
+.ilan-sheet .cell:nth-child(n+4){ border-top:1px solid var(--line); padding-top:4mm; }
+.ilan-sheet .lab{ font-size:9.5px; font-weight:600; letter-spacing:.12em; color:var(--mut); text-transform:uppercase; margin-bottom:5px; }
+.ilan-sheet .val{ font-family:'Archivo'; font-weight:700; font-size:19px; color:var(--ink); line-height:1.05; }
+.ilan-sheet .val small{ font-size:12px; color:var(--mut); font-weight:600; font-family:'Inter'; }
+
+.ilan-sheet .boya{ margin-top:5mm; border-top:1px solid var(--line); padding-top:5mm; display:flex; gap:6mm; flex:1; min-height:0; }
+.ilan-sheet .boya .dg{ width:31mm; flex-shrink:0; }
+.ilan-sheet .boya .dg svg{ width:100%; height:auto; }
+.ilan-sheet .boya .info{ flex:1; min-width:0; }
+.ilan-sheet .boya .bt{ font-size:11px; font-weight:700; letter-spacing:.16em; color:var(--acc2); text-transform:uppercase; margin-bottom:9px; }
+.ilan-sheet .lg{ display:flex; flex-direction:column; gap:7px; margin-bottom:10px; }
+.ilan-sheet .lg .r{ display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ink); }
+.ilan-sheet .lg .d{ width:14px; height:14px; border-radius:4px; }
+.ilan-sheet .summ{ font-size:11.5px; color:var(--mut); line-height:1.6; }
+.ilan-sheet .summ b{ color:var(--ink); font-weight:600; }
+
+.ilan-sheet .foot{ background:var(--dark); color:#fff; padding:7mm 13mm; display:grid; grid-template-columns:1.05fr 1fr auto; align-items:center; gap:20px; position:relative; }
+.ilan-sheet .foot::before{ content:""; position:absolute; left:0; right:0; top:0; height:3px; background:linear-gradient(90deg,transparent,var(--acc2) 55%,var(--acc)); }
+.ilan-sheet .plab,.ilan-sheet .clab{ font-size:10.5px; letter-spacing:.24em; color:rgba(255,255,255,.5); text-transform:uppercase; margin-bottom:6px; }
+.ilan-sheet .amt{ font-family:'Spline Sans Mono'; font-weight:700; font-size:46px; line-height:.9; }
+.ilan-sheet .amt span{ font-size:27px; color:var(--acc); margin-right:4px; }
+.ilan-sheet .pnote{ font-size:12px; color:rgba(255,255,255,.6); margin-top:7px; }
+.ilan-sheet .contact{ border-left:1px solid rgba(255,255,255,.14); padding-left:20px; }
+.ilan-sheet .phone{ font-family:'Spline Sans Mono'; font-weight:700; font-size:27px; }
+.ilan-sheet .addr{ font-size:12px; color:rgba(255,255,255,.6); margin-top:7px; line-height:1.5; }
+.ilan-sheet .qrw{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+.ilan-sheet .qr{ width:88px; height:88px; border-radius:10px; background:#fff; padding:7px; }
+.ilan-sheet .qr svg{ width:100%; height:100%; display:block; }
+.ilan-sheet .qrc{ font-size:9px; letter-spacing:.14em; color:rgba(255,255,255,.5); text-transform:uppercase; }
 `;

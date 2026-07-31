@@ -15,6 +15,7 @@ model Arac {
   hasarDurumu  String?   // "Hasarsız" | "Boyasız" | "Değişensiz" ...
   ilanFiyati   Float?    // İlan/satış istenen fiyat (alım/satım fiyatından bağımsız)
   ilanUrl      String?   // Elle girilirse QR bunu kullanır; boşsa /ilan/{id} otomatik
+  boyaDurumu   String?   // Boya/değişen şeması. JSON: {"kaput":"boyali","arkaTampon":"degisen"}
 
   // ... geri kalan alanlar / ilişkiler aynen ...
 }
