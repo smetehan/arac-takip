@@ -1,0 +1,20 @@
+// ┌──────────────────────────────────────────────────────────┐
+// │  prisma/schema.prisma → model Arac içine EKLE              │
+// │  (mevcut alanları silme, sadece bu satırları ekle)        │
+// └──────────────────────────────────────────────────────────┘
+
+model Arac {
+  // ... mevcut alanların aynen kalsın ...
+
+  // --- İlan (satılık afişi) alanları ---
+  yakit        String?   // "Benzin" | "Dizel" | "LPG" | "Hibrit" | "Elektrik"
+  vites        String?   // "Manuel" | "Otomatik"
+  motorGucu    String?   // "170 HP" gibi serbest metin
+  kasaTipi     String?   // "Sedan" | "Hatchback" | "SUV" ...
+  cekis        String?   // "Önden Çekiş" | "Arkadan İtiş" | "4x4"
+  hasarDurumu  String?   // "Hasarsız" | "Boyasız" | "Değişensiz" ...
+  ilanFiyati   Float?    // İlan/satış istenen fiyat (alım/satım fiyatından bağımsız)
+  ilanUrl      String?   // Elle girilirse QR bunu kullanır; boşsa /ilan/{id} otomatik
+
+  // ... geri kalan alanlar / ilişkiler aynen ...
+}
