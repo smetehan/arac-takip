@@ -8,7 +8,7 @@ import { TEMPLATES, THEMES, ILAN_CSS, CarDiagram, STATES, CYCLE } from '@/lib/il
 // ⚙️ Galeri bilgileri — kendi bilgilerinle değiştir
 const GALERI = {
   ad: 'ANAFARTALAR MOTORS',
-  mono: 'ANAFARTALAR MOTORS',
+  mono: 'A',
   alt: 'OTO KENT · ANKARA',
   telefon: '0543 613 06 40',
   adres: 'OtoKent / Yenimahalle / Ankara ·',
