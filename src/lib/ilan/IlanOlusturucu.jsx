@@ -148,8 +148,16 @@ export default function IlanOlusturucu({ arac, siteUrl }) {
         <div className="mb-4">
           <label className="label">Teknik Özellikler</label>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            <input className="input" placeholder="Yakıt" value={f.yakit} onChange={(e) => set('yakit', e.target.value)} />
-            <input className="input" placeholder="Vites" value={f.vites} onChange={(e) => set('vites', e.target.value)} />
+            <select className="input" value={f.yakit} onChange={(e) => set('yakit', e.target.value)}>
+              <option value="Benzin">Benzin</option>
+              <option value="Benzin+LPG">Benzin+LPG</option>
+              <option value="Dizel">Dizel</option>
+              <option value="Elektrik">Elektrik</option>
+            </select>
+            <select className="input" value={f.vites} onChange={(e) => set('vites', e.target.value)}>
+              <option value="Manuel">Manuel</option>
+              <option value="Otomatik">Otomatik</option>
+            </select>
             <input className="input" placeholder="Motor Gücü" value={f.guc} onChange={(e) => set('guc', e.target.value)} />
             <input className="input" placeholder="Kasa Tipi" value={f.kasa} onChange={(e) => set('kasa', e.target.value)} />
           </div>
