@@ -7,11 +7,11 @@ import { TEMPLATES, THEMES, ILAN_CSS, CarDiagram, STATES, CYCLE } from '@/lib/il
 
 // ⚙️ Galeri bilgileri — kendi bilgilerinle değiştir
 const GALERI = {
-  ad: 'MERİDYEN OTO',
-  mono: 'M',
-  alt: 'Güvenilir Galeri · Ankara',
-  telefon: '0555 555 55 55',
-  adres: 'Çankaya / Ankara · www.meridyenoto.com',
+  ad: 'ANAFARTALAR MOTORS',
+  mono: 'ANAFARTALAR MOTORS',
+  alt: 'OTO KENT · ANKARA',
+  telefon: '0543 613 06 40',
+  adres: 'OtoKent / Yenimahalle / Ankara ·',
 };
 
 const TUM_ROZETLER = ['Takasa Uygun', 'Kredi İmkanı', 'Servis Bakımlı', 'Garanti', 'Boyasız', 'Değişensiz'];
