@@ -188,6 +188,7 @@ export const ILAN_CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@500;600;700&display=swap');
 
 .ilan-sheet{ font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; width:297mm; height:210mm; display:flex; flex-direction:column; overflow:hidden; background:var(--paper); color:var(--ink); }
+.ilan-sheet, .ilan-sheet *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
 .ilan-sheet *{ box-sizing:border-box; margin:0; padding:0; }
 .ilan-sheet .mono{ font-family:'Spline Sans Mono',monospace; }
 

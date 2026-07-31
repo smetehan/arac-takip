@@ -7,11 +7,11 @@ import { TEMPLATES, THEMES, ILAN_CSS, CarDiagram, STATES, CYCLE } from '@/lib/il
 
 // ⚙️ Galeri bilgileri — kendi bilgilerinle değiştir
 const GALERI = {
-  ad: 'ANAFARTALAR MOTORS',
-  mono: 'A',
-  alt: 'OTO KENT · ANKARA',
-  telefon: '0543 613 06 40',
-  adres: 'OtoKent / Yenimahalle / Ankara ·',
+  ad: 'MERİDYEN OTO',
+  mono: 'M',
+  alt: 'Güvenilir Galeri · Ankara',
+  telefon: '0555 555 55 55',
+  adres: 'Çankaya / Ankara · www.meridyenoto.com',
 };
 
 const TUM_ROZETLER = ['Takasa Uygun', 'Kredi İmkanı', 'Servis Bakımlı', 'Garanti', 'Boyasız', 'Değişensiz'];
@@ -193,8 +193,9 @@ function THEME_QR(id) { return (THEMES[id] || THEMES.mavi).dark; }
 const PRINT_CSS = `
 @media print {
   @page { size:A4 landscape; margin:0; }
+  html, body { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
   body * { visibility:hidden !important; }
-  .ilan-print-area, .ilan-print-area * { visibility:visible !important; }
+  .ilan-print-area, .ilan-print-area * { visibility:visible !important; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
   .ilan-print-area { position:fixed !important; left:0; top:0; width:auto !important; height:auto !important; margin:0 !important; }
   .ilan-scale { position:static !important; transform:none !important; box-shadow:none !important; }
   .ilan-panel { display:none !important; }
