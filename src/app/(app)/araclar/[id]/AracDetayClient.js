@@ -80,19 +80,22 @@ export default function AracDetayClient({ arac, kar, user }) {
           </div>
 
           {/* Hızlı eylemler */}
-          {isAdmin && (
-            <div className="flex flex-wrap gap-2">
-              {arac.durum === 'STOKTA' ? (
-                <SatisButonu arac={arac} onChange={refresh} />
-              ) : (
-                <SatisGeriAlButonu arac={arac} onChange={refresh} />
-              )}
-              <Link href={`/araclar/${arac.id}/duzenle`} className="btn btn-ghost text-sm">
-                Düzenle
-              </Link>
-              <SilButonu arac={arac} />
-            </div>
-          )}
+         {isAdmin && (
+  <div className="flex flex-wrap gap-2">
+    {arac.durum === 'STOKTA' ? (
+      <SatisButonu arac={arac} onChange={refresh} />
+    ) : (
+      <SatisGeriAlButonu arac={arac} onChange={refresh} />
+    )}
+    <Link href={`/araclar/${arac.id}/ilan`} className="btn btn-accent text-sm">
+      İlan Oluştur
+    </Link>
+    <Link href={`/araclar/${arac.id}/duzenle`} className="btn btn-ghost text-sm">
+      Düzenle
+    </Link>
+    <SilButonu arac={arac} />
+  </div>
+)}
         </div>
       </div>
 
